@@ -1,0 +1,751 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Otto Client Journey</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: CRM-style workspace. Quiet sidebar | flat white work surface (top bar, toolbar, spreadsheet table or board) | record panel docked on the right.
+   Monochrome, 13px Inter, 1px hairlines, no shadows on surfaces. Colour lives in tags and status only. Otto blue stays the accent. */
+:root{
+  --bg:#FFFFFF; --side:#FAFAFA; --raised:#FFFFFF; --ink:#1C1D1F; --ink2:#3D3E42; --muted:#75777C; --faint:#A4A6AB;
+  --line:#EDEEF0; --line2:#E1E2E5; --hover:#F5F5F6; --sel:#F0F5FE; --sel-line:#CFE0FB;
+  --accent:#1F6FD1; --accent-ink:#1857A6;
+  --btn:#1C1D1F; --btn-ink:#FFFFFF;
+  --h0:#7A7F88; --h1:#7B5BD6; --h2:#D35F28; --h3:#1F6FD1; --h4:#2A8656; --h5:#17868A;
+  --ok:#2A8656; --warn:#B7791F; --crit:#C8402A; --care:#B4B6BA;
+  --pop:0 1px 2px rgba(20,20,25,.05),0 8px 24px rgba(20,20,25,.08); --scrim:rgba(20,20,25,.25);
+  --sans:'Inter','Helvetica Neue',Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141415; --side:#19191B; --raised:#1D1D20; --ink:#EDEEF0; --ink2:#C9CACE; --muted:#9A9CA2; --faint:#6C6E74;
+  --line:#25262A; --line2:#303136; --hover:#1E1F22; --sel:#172235; --sel-line:#27406A;
+  --accent:#5E9CEA; --accent-ink:#8DBAF3;
+  --btn:#EDEEF0; --btn-ink:#141415;
+  --h0:#9BA0A8; --h1:#A48CF0; --h2:#F08B5A; --h3:#5E9CEA; --h4:#5CC08A; --h5:#4CC0C4;
+  --ok:#5CC08A; --warn:#E5AA4A; --crit:#F2836D; --care:#55575C;
+  --pop:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.4); --scrim:rgba(0,0,0,.5);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141415; --side:#19191B; --raised:#1D1D20; --ink:#EDEEF0; --ink2:#C9CACE; --muted:#9A9CA2; --faint:#6C6E74;
+  --line:#25262A; --line2:#303136; --hover:#1E1F22; --sel:#172235; --sel-line:#27406A;
+  --accent:#5E9CEA; --accent-ink:#8DBAF3;
+  --btn:#EDEEF0; --btn-ink:#141415;
+  --h0:#9BA0A8; --h1:#A48CF0; --h2:#F08B5A; --h3:#5E9CEA; --h4:#5CC08A; --h5:#4CC0C4;
+  --ok:#5CC08A; --warn:#E5AA4A; --crit:#F2836D; --care:#55575C;
+  --pop:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.4); --scrim:rgba(0,0,0,.5);
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:13px;line-height:1.45;font-feature-settings:"cv11","ss01"}
+h1,h2,h3,h4{margin:0;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+p{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-radius:6px}
+.muted{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+svg.i{flex:none;width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+/* Tags and status: tinted from one hue each */
+.tag,.st{--h:var(--h0);display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 7px;border-radius:6px;font-size:12px;font-weight:500;white-space:nowrap;
+  background:color-mix(in srgb,var(--h) 10%,var(--bg));color:color-mix(in srgb,var(--h) 82%,var(--ink));border:1px solid color-mix(in srgb,var(--h) 20%,var(--bg))}
+.p0{--h:var(--h0)} .p1{--h:var(--h1)} .p2{--h:var(--h2)} .p3{--h:var(--h3)} .p4{--h:var(--h4)} .p5{--h:var(--h5)}
+.st.ok{--h:var(--ok)} .st.warn{--h:var(--warn)} .st.crit{--h:var(--crit)}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--h)}
+.dot{flex:none;width:7px;height:7px;border-radius:50%}
+.dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.crit{background:var(--crit)}
+.av{--h:var(--h0);flex:none;width:20px;height:20px;border-radius:50%;display:inline-grid;place-items:center;font-size:9.5px;font-weight:600;letter-spacing:.02em;
+  background:color-mix(in srgb,var(--h) 18%,var(--bg));color:color-mix(in srgb,var(--h) 85%,var(--ink))}
+.pav{--h:var(--h0);flex:none;width:20px;height:20px;border-radius:5px;display:inline-grid;place-items:center;font-size:11px;font-weight:600;
+  background:color-mix(in srgb,var(--h) 16%,var(--bg));color:color-mix(in srgb,var(--h) 85%,var(--ink));border:1px solid color-mix(in srgb,var(--h) 22%,var(--bg))}
+.person{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:7px;background:var(--btn);color:var(--btn-ink);font-weight:500;font-size:12.5px;white-space:nowrap}
+.btn:hover{opacity:.86}
+.btn.ghost{background:var(--bg);color:var(--ink);border:1px solid var(--line2)}
+.btn.ghost:hover{background:var(--hover);opacity:1}
+.link{color:var(--accent);font-weight:500}
+.link:hover{color:var(--accent-ink);text-decoration:underline}
+.kbd{font-size:11px;color:var(--muted);border:1px solid var(--line2);border-radius:4px;padding:0 4px;line-height:16px}
+
+/* ---------- Shell ---------- */
+.app{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100%}
+.side{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:18px;padding:12px 10px 12px 16px;background:var(--side);border-right:1px solid var(--line);overflow-y:auto}
+.ws{display:flex;align-items:center;gap:9px;height:32px;padding:0 6px}
+.ws-logo{width:22px;height:22px;border-radius:6px;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-weight:600;font-size:13px;letter-spacing:-.04em}
+.ws b{font-weight:600;font-size:13px}
+.ws .chev{margin-left:auto;color:var(--faint)}
+.nav{display:flex;flex-direction:column;gap:1px}
+.nav button{display:flex;align-items:center;gap:9px;height:30px;padding:0 8px;border-radius:7px;color:var(--ink2);font-weight:500}
+.nav button:hover{background:var(--hover)}
+.nav button[aria-current="page"]{background:var(--hover);color:var(--ink)}
+.nav button svg{color:var(--muted)}
+.nav .count{margin-left:auto;font-size:12px;color:var(--faint);font-weight:400;font-variant-numeric:tabular-nums}
+.side-label{display:flex;align-items:center;justify-content:space-between;height:24px;padding:0 8px;font-size:12px;font-weight:500;color:var(--muted)}
+.side-projects{display:flex;flex-direction:column;gap:1px}
+.side-projects button{display:flex;align-items:center;gap:9px;height:30px;padding:0 8px;border-radius:7px;color:var(--ink2)}
+.side-projects button:hover{background:var(--hover)}
+.side-projects button[aria-pressed="true"]{background:var(--hover);color:var(--ink);font-weight:500}
+.side-projects .pav{width:18px;height:18px;font-size:10px;border-radius:4px}
+.side-projects .dot{margin-left:auto}
+.side-foot{margin-top:auto;padding:10px 8px 0;border-top:1px solid var(--line);font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:flex-start}
+
+.main{display:grid;grid-template-columns:minmax(0,1fr);min-width:0;align-items:start}
+.main.with-panel{grid-template-columns:minmax(0,1fr) 400px}
+.content{min-width:0}
+
+.topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;height:48px;padding:0 20px;background:var(--bg);border-bottom:1px solid var(--line)}
+.crumb{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;min-width:0;white-space:nowrap}
+.crumb .ic{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 12%,var(--bg));color:var(--accent)}
+.crumb .cnt{font-weight:400;color:var(--muted);font-variant-numeric:tabular-nums}
+.seg{display:inline-flex;padding:2px;border-radius:8px;background:var(--hover);border:1px solid var(--line)}
+.seg button{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:6px;color:var(--muted);font-weight:500;font-size:12.5px}
+.seg button[aria-pressed="true"]{background:var(--bg);color:var(--ink);box-shadow:0 0 0 1px var(--line2)}
+
+.toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 12px;padding:10px 20px;border-bottom:1px solid var(--line)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:7px;border:1px dashed var(--line2);color:var(--muted);font-weight:500;font-size:12.5px}
+.chip:hover{color:var(--ink);background:var(--hover)}
+.chip[aria-pressed="true"]{border-style:solid;border-color:var(--sel-line);background:var(--sel);color:var(--ink)}
+.chip .n{color:var(--faint);font-variant-numeric:tabular-nums}
+.chip[aria-pressed="true"] .n{color:var(--muted)}
+.example{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.example::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--warn)}
+
+/* ---------- Table ---------- */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;min-width:860px;border-collapse:separate;border-spacing:0}
+th,td{height:40px;padding:0 12px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);white-space:nowrap;text-align:left;vertical-align:middle}
+th:last-child,td:last-child{border-right:0}
+th{height:34px;font-size:12px;font-weight:500;color:var(--muted);background:var(--bg)}
+th span{display:inline-flex;align-items:center;gap:6px}
+th:first-child,td:first-child{position:sticky;left:0;z-index:1;background:var(--bg);padding-left:20px}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:var(--hover)}
+tbody tr[aria-selected="true"] td{background:var(--sel)}
+tbody tr:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.cell-name{display:flex;align-items:center;gap:9px;font-weight:500}
+td.next{white-space:normal;min-width:220px;color:var(--ink2);line-height:1.35}
+.upd.warn{color:var(--warn)} .upd.crit{color:var(--crit)}
+.bar{display:flex;gap:2px;width:60px}
+.bar i{flex:1;height:4px;border-radius:2px;background:var(--line2)}
+.bar i.on{background:var(--accent)}
+.tfoot{padding:10px 20px;font-size:12px;color:var(--muted)}
+.empty{padding:28px 20px;color:var(--muted)}
+
+/* ---------- Board ---------- */
+.board{display:grid;grid-auto-flow:column;grid-auto-columns:220px;gap:10px;padding:14px 20px 24px;overflow-x:auto;align-items:start}
+.lane{background:var(--side);border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:8px;min-height:140px}
+.lane-h{display:flex;align-items:center;justify-content:space-between;padding:2px 2px 4px}
+.lane-h .n{color:var(--faint);font-variant-numeric:tabular-nums}
+.bcard{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:8px;background:var(--raised);border:1px solid var(--line2);width:100%}
+.bcard:hover{border-color:var(--faint)}
+.bcard[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.bcard .r{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.bcard .nm{display:flex;align-items:center;gap:8px;font-weight:500}
+.bcard .nx{font-size:12px;color:var(--muted);line-height:1.35}
+.lane-empty{font-size:12px;color:var(--faint);padding:8px 4px}
+
+/* ---------- Record panel ---------- */
+.panel{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--bg);border-left:1px solid var(--line);display:flex;flex-direction:column}
+.p-head{display:flex;align-items:flex-start;gap:12px;padding:16px 16px 12px 20px}
+.p-head .pav{width:36px;height:36px;font-size:16px;border-radius:9px}
+.p-head .t{flex:1;min-width:0}
+.p-head h2{font-size:17px;line-height:1.25}
+.p-head .sub{font-size:12.5px;color:var(--muted)}
+.close{flex:none;width:28px;height:28px;border-radius:7px;display:grid;place-items:center;color:var(--muted)}
+.close:hover{background:var(--hover);color:var(--ink)}
+.tabs{display:flex;gap:16px;padding:0 20px;border-bottom:1px solid var(--line)}
+.tabs button{height:36px;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px;display:inline-flex;align-items:center;gap:6px}
+.tabs button:hover{color:var(--ink)}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.tabs .n{font-size:11px;color:var(--muted);background:var(--hover);border-radius:4px;padding:0 5px}
+.p-body{display:flex;flex-direction:column;gap:20px;padding:16px 20px 28px}
+.sec-h{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:8px}
+
+.callout{border:1px solid var(--line2);border-radius:10px;padding:12px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px}
+.callout .ci{--h:var(--h0);width:24px;height:24px;border-radius:7px;display:grid;place-items:center;grid-row:span 3;
+  background:color-mix(in srgb,var(--h) 14%,var(--bg));color:var(--h)}
+.callout.crit .ci{--h:var(--crit)} .callout.warn .ci{--h:var(--warn)} .callout.ok .ci{--h:var(--ok)}
+.callout .k{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.callout strong{font-weight:600}
+.callout p{color:var(--muted)}
+.callout .acts{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+
+.attrs{display:flex;flex-direction:column}
+.attr{display:grid;grid-template-columns:132px minmax(0,1fr);align-items:center;min-height:32px;gap:8px}
+.attr dt,.attr .l{display:flex;align-items:center;gap:7px;color:var(--muted)}
+.attr dd,.attr .v{margin:0;min-width:0;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.attr .missing{color:var(--warn)}
+dl{margin:0}
+
+.prog{display:grid;grid-template-columns:repeat(6,1fr);gap:3px}
+.prog button{display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.prog i{height:5px;border-radius:3px;background:var(--line2)}
+.prog .done i{background:var(--accent)}
+.prog .now i{background:color-mix(in srgb,var(--accent) 45%,var(--bg))}
+.prog button:hover{color:var(--ink)}
+.prog button[aria-pressed="true"]{color:var(--ink);font-weight:600}
+
+.flags{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px}
+.flag{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-top:1px solid var(--line)}
+.flag:first-child{border-top:0}
+.flag .fh{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}
+.flag strong{font-weight:500}
+.flag p{color:var(--muted)}
+
+.checks{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:10px}
+.checks li{display:flex;gap:10px;align-items:center;min-height:36px;padding:6px 12px;border-top:1px solid var(--line)}
+.checks li:first-child{border-top:0}
+.box{flex:none;width:15px;height:15px;border-radius:4px;border:1.5px solid var(--line2);display:grid;place-items:center}
+.checks li.done .box{background:var(--accent);border-color:var(--accent)}
+.checks li.done .box::after{content:"";width:7px;height:3.5px;border:1.8px solid var(--bg);border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.checks li.done .txt{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--faint)}
+.checks .when{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.res{display:flex;flex-direction:column;gap:2px}
+.res div{display:flex;align-items:center;gap:8px;height:30px;padding:0 8px;border-radius:7px;color:var(--ink2)}
+.res div:hover{background:var(--hover)}
+.res .doc{width:18px;height:18px;border-radius:4px;border:1px solid var(--line2);display:grid;place-items:center;font-size:10px;font-weight:600;color:var(--muted)}
+.res .src{margin-left:auto;font-size:11.5px;color:var(--faint)}
+.allgood{padding:10px 12px;border-radius:10px;border:1px solid var(--line);color:var(--muted)}
+
+/* ---------- Journey ---------- */
+.jwrap{padding:16px 20px 28px}
+.jcard{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.map{min-width:760px}
+.cols{display:grid;grid-template-columns:repeat(6,1fr)}
+.col{border-left:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.col:first-child{border-left:0}
+button.col:hover{background:var(--hover)}
+button.col[aria-pressed="true"]{background:var(--sel)}
+.col .feel{font-size:20px;font-weight:600;letter-spacing:-.02em;line-height:1.1;margin-top:6px}
+.col .q{font-size:12px;color:var(--muted)}
+svg.curve{display:block;width:100%;height:auto}
+.curve .grid{stroke:var(--line);stroke-width:1}
+.curve .aim{stroke:var(--accent);stroke-width:2;fill:none}
+.curve .care{stroke:var(--care);stroke-width:1.5;stroke-dasharray:4 5;fill:none}
+.curve .pt{fill:var(--bg);stroke:var(--accent);stroke-width:2}
+.curve .pt.sel{fill:var(--accent)}
+.curve .band{fill:var(--sel)}
+.rows{display:grid;grid-template-columns:repeat(6,1fr);border-top:1px solid var(--line)}
+.rows>div{border-left:1px solid var(--line);padding:10px 14px;display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--ink2)}
+.rows>div:first-child{border-left:0}
+.rows .rl{font-size:11.5px;color:var(--muted);font-weight:500;margin-bottom:2px}
+.rows.breaks button{color:var(--ink2);text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px;font-size:12.5px}
+.rows.breaks button:hover{color:var(--accent);text-decoration-color:currentColor}
+.overview{padding:14px 20px;border-bottom:1px solid var(--line)}
+.ov-card{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.ov-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px 16px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.sec-t{font-weight:600}
+.ov-cols .col{padding:10px 14px 0;gap:0}
+.curve .ovline{stroke:var(--line2);stroke-width:1.5;fill:none}
+.curve .pin{cursor:pointer}
+.curve .pin .d{stroke:var(--bg);stroke-width:3}
+.curve .pin .ring{fill:none;stroke-width:1.5}
+.curve .pin:focus{outline:none}
+.curve .pin:focus-visible .ring,.curve .pin:hover .ring{stroke-dasharray:3 3}
+.curve .pin text{font-family:var(--sans);font-size:20px;font-weight:500;fill:var(--ink)}
+.curve .pin .lbl{fill:var(--bg);stroke:var(--line2);stroke-width:1}
+.f-ok{fill:var(--ok);stroke:var(--ok)} .f-warn{fill:var(--warn);stroke:var(--warn)} .f-crit{fill:var(--crit);stroke:var(--crit)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend .ln{display:inline-block;width:18px;border-top:2px solid var(--accent)}
+.legend .ln.d{border-top:1.5px dashed var(--care)}
+.feelbig{font-size:26px;font-weight:600;letter-spacing:-.02em}
+
+/* ---------- Playbook ---------- */
+.pb2{display:grid;grid-template-columns:300px minmax(0,1fr);min-height:calc(100vh - 48px)}
+.pb-list{border-right:1px solid var(--line);padding:8px}
+.pb-item{display:flex;flex-direction:column;align-items:flex-start;gap:5px;width:100%;padding:10px 12px;border-radius:8px}
+.pb-item:hover{background:var(--hover)}
+.pb-item[aria-pressed="true"]{background:var(--sel)}
+.pb-item strong{font-weight:500}
+.pb-detail{padding:24px 28px 40px;max-width:760px;display:flex;flex-direction:column;gap:22px;min-width:0}
+.pb-detail h2{font-size:22px;letter-spacing:-.02em;margin-top:8px}
+.pb-detail ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;color:var(--ink2)}
+.msg{border:1px solid var(--line2);border-radius:10px;overflow:hidden}
+.msg-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;background:var(--side);border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}
+.msg p{padding:14px;white-space:pre-wrap;line-height:1.6;color:var(--ink2)}
+
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:20;opacity:0;pointer-events:none;transition:opacity .2s}
+
+@media (max-width:1180px){
+  .main.with-panel{grid-template-columns:minmax(0,1fr)}
+  .panel{position:fixed;top:0;right:0;bottom:0;height:auto;width:min(420px,100%);z-index:30;box-shadow:var(--pop);
+    padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+    transform:translateX(100%);transition:transform .22s ease;visibility:hidden}
+  .panel.open{transform:none;visibility:visible}
+  .scrim.open{opacity:1;pointer-events:auto}
+}
+@media (max-width:760px){
+  .app{grid-template-columns:minmax(0,1fr);align-content:start}
+  .side{position:sticky;top:0;z-index:10;height:auto;flex-direction:row;align-items:center;gap:8px;padding:8px 16px;border-right:0;border-bottom:1px solid var(--line);overflow-x:auto}
+  .ws b,.ws .chev,.side-sec,.side-foot,.nav .count,.nav svg{display:none}
+  .nav{flex-direction:row}
+  .nav button{white-space:nowrap}
+  .topbar{position:static;padding:0 16px}
+  .toolbar,.tfoot,.overview{padding-inline:16px}
+  th:first-child,td:first-child{padding-left:16px}
+  .board{padding-inline:16px}
+  .jwrap{padding-inline:16px}
+  .pb2{grid-template-columns:minmax(0,1fr)}
+  .pb-list{border-right:0;border-bottom:1px solid var(--line);padding:8px 8px}
+  .pb-detail{padding:20px 16px 32px}
+  .attr{grid-template-columns:120px minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app">
+  <aside class="side">
+    <div class="ws"><span class="ws-logo">o</span><b>Otto Creatives</b><svg class="i chev" viewBox="0 0 14 14"><path d="M4 5.5 7 8.5l3-3"/></svg></div>
+    <nav class="nav" aria-label="Views">
+      <button data-view="projects"><svg class="i" viewBox="0 0 14 14"><rect x="1.5" y="1.5" width="11" height="11" rx="2"/><path d="M1.5 5.5h11M5.5 5.5v7"/></svg>Projects<span class="count" id="count-projects"></span></button>
+      <button data-view="journey"><svg class="i" viewBox="0 0 14 14"><path d="M1 10c2-1 2.6-4 4.6-4s2 3 4 3S12 5 13 4"/></svg>The journey<span class="count">6</span></button>
+      <button data-view="playbook"><svg class="i" viewBox="0 0 14 14"><path d="M7 1.8 12.8 12H1.2Z"/><path d="M7 5.6v2.6M7 10v.1"/></svg>When it breaks<span class="count" id="count-breaks"></span></button>
+    </nav>
+    <div class="side-sec">
+      <div class="side-label">Active projects</div>
+      <div class="side-projects" id="side-projects"></div>
+    </div>
+    <div class="side-foot"><svg class="i" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.5"/><path d="M7 6.3V10M7 4.2v.1"/></svg><span>Example data. Would sync from ClickUp, Asana or Notion.</span></div>
+  </aside>
+
+  <div class="main" id="main">
+    <div class="content">
+      <section id="view-projects" hidden>
+        <div class="topbar">
+          <div class="crumb"><span class="ic"><svg class="i" viewBox="0 0 14 14"><rect x="1.5" y="1.5" width="11" height="11" rx="2"/><path d="M1.5 5.5h11M5.5 5.5v7"/></svg></span>Projects<span class="cnt" id="crumb-count"></span></div>
+          <div class="seg" role="group" aria-label="Layout">
+            <button data-mode="table"><svg class="i" viewBox="0 0 14 14"><path d="M1.5 3.5h11M1.5 7h11M1.5 10.5h11"/></svg>Table</button>
+            <button data-mode="board"><svg class="i" viewBox="0 0 14 14"><rect x="1.5" y="2" width="3" height="10" rx="1"/><rect x="5.5" y="2" width="3" height="7" rx="1"/><rect x="9.5" y="2" width="3" height="5" rx="1"/></svg>Board</button>
+          </div>
+        </div>
+        <div class="overview">
+          <div class="ov-card">
+            <div class="ov-head"><span class="sec-t">On the journey</span>
+              <div class="legend"><span><i class="dot ok"></i>On track</span><span><i class="dot warn"></i>Needs attention</span><span><i class="dot crit"></i>At risk</span></div></div>
+            <div class="scroll"><div class="map" id="overview-map"></div></div>
+          </div>
+        </div>
+        <div class="toolbar"><div class="chips" id="chips"></div><span class="example">Example projects, not real clients</span></div>
+        <div id="table-view">
+          <div class="tbl-wrap"><table>
+            <thead><tr>
+              <th><span><svg class="i" viewBox="0 0 14 14"><path d="M2 3h10M2 7h10M2 11h6"/></svg>Project</span></th>
+              <th><span><svg class="i" viewBox="0 0 14 14"><path d="M1.5 7.5 6 2h6.5v5.5L7 13Z"/><circle cx="9.5" cy="4.5" r=".6"/></svg>Phase</span></th>
+              <th><span><svg class="i" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.5"/><path d="M7 4v3l2 1.5"/></svg>Status</span></th>
+              <th><span><svg class="i" viewBox="0 0 14 14"><path d="M2 2.5h10v7H6L3 12v-2.5H2Z"/></svg>Last client update</span></th>
+              <th><span><svg class="i" viewBox="0 0 14 14"><path d="M3 7h8M8 4l3 3-3 3"/></svg>Next action</span></th>
+              <th><span><svg class="i" viewBox="0 0 14 14"><circle cx="7" cy="5" r="2.5"/><path d="M2.5 12.5c.6-2.3 2.4-3.5 4.5-3.5s3.9 1.2 4.5 3.5"/></svg>Lead</span></th>
+              <th><span><svg class="i" viewBox="0 0 14 14"><path d="M2.5 7.5 5.5 10.5 11.5 3.5"/></svg>Client approver</span></th>
+            </tr></thead>
+            <tbody id="rows"></tbody>
+          </table></div>
+          <div class="tfoot" id="tfoot"></div>
+        </div>
+        <div class="board" id="board-view" hidden></div>
+      </section>
+
+      <section id="view-journey" hidden>
+        <div class="topbar">
+          <div class="crumb"><span class="ic"><svg class="i" viewBox="0 0 14 14"><path d="M1 10c2-1 2.6-4 4.6-4s2 3 4 3S12 5 13 4"/></svg></span>The journey<span class="cnt">6 phases</span></div>
+          <div class="legend"><span><i class="ln"></i>The experience we aim for</span><span><i class="ln d"></i>Without care</span></div>
+        </div>
+        <div class="jwrap"><div class="jcard"><div class="scroll"><div class="map" id="journey-map"></div></div></div></div>
+      </section>
+
+      <section id="view-playbook" hidden>
+        <div class="topbar">
+          <div class="crumb"><span class="ic"><svg class="i" viewBox="0 0 14 14"><path d="M7 1.8 12.8 12H1.2Z"/><path d="M7 5.6v2.6M7 10v.1"/></svg></span>When it breaks<span class="cnt" id="pb-count"></span></div>
+          <span class="muted">From our team interviews</span>
+        </div>
+        <div class="pb2"><div class="pb-list" id="pb-list"></div><div class="pb-detail" id="pb-detail"></div></div>
+      </section>
+    </div>
+    <aside class="panel" id="panel" aria-label="Details" hidden></aside>
+  </div>
+</div>
+<div class="scrim" id="scrim"></div>
+
+<script>
+const TODAY = new Date('2026-11-03T12:00:00');
+const daysSince = d => Math.round((TODAY - new Date(d + 'T12:00:00')) / 86400000);
+const fmt = d => new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const pad = i => '0' + (i + 1);
+const $ = id => document.getElementById(id);
+const I = {
+  close: '<svg class="i" viewBox="0 0 14 14"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7"/></svg>',
+  flag: '<svg class="i" viewBox="0 0 14 14"><path d="M3 12.5V2M3 2.5h7.5L9 5l1.5 2.5H3"/></svg>',
+  check: '<svg class="i" viewBox="0 0 14 14"><path d="M2.5 7.5 5.5 10.5 11.5 3.5"/></svg>',
+  tag: '<svg class="i" viewBox="0 0 14 14"><path d="M1.5 7.5 6 2h6.5v5.5L7 13Z"/></svg>',
+  status: '<svg class="i" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.5"/><path d="M7 4v3l2 1.5"/></svg>',
+  user: '<svg class="i" viewBox="0 0 14 14"><circle cx="7" cy="5" r="2.5"/><path d="M2.5 12.5c.6-2.3 2.4-3.5 4.5-3.5s3.9 1.2 4.5 3.5"/></svg>',
+  cal: '<svg class="i" viewBox="0 0 14 14"><rect x="1.5" y="2.5" width="11" height="10" rx="2"/><path d="M1.5 5.5h11M4.5 1v3M9.5 1v3"/></svg>',
+  msg: '<svg class="i" viewBox="0 0 14 14"><path d="M2 2.5h10v7H6L3 12v-2.5H2Z"/></svg>',
+  link: '<svg class="i" viewBox="0 0 14 14"><path d="M6 8a2.5 2.5 0 0 0 3.5 0l2-2a2.5 2.5 0 0 0-3.5-3.5l-.6.6M8 6a2.5 2.5 0 0 0-3.5 0l-2 2A2.5 2.5 0 0 0 6 11.5l.6-.6"/></svg>',
+  warn: '<svg class="i" viewBox="0 0 14 14"><path d="M7 1.8 12.8 12H1.2Z"/><path d="M7 5.6v2.6M7 10v.1"/></svg>',
+  ok: '<svg class="i" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.5"/><path d="M4.5 7.2 6.3 9l3.2-3.6"/></svg>',
+};
+
+const PHASES = [
+  { name: 'Preparation', feel: 'Curious', quote: '“Can they really help us?”',
+    goal: 'Show the client we listen before we sell. Be honest about fit.',
+    lifts: ['Welcome letter', 'Honest fit talk'], breaks: ['order'],
+    tasks: ['Fit call held', 'Proposal signed', 'Welcome letter sent'],
+    resources: ['Welcome letter template', 'Fit call questions', 'Proposal template'] },
+  { name: 'Foundation', feel: 'Understood', quote: '“They actually get us.”',
+    goal: 'Turn the brief into a shared diagnosis the client recognises as theirs.',
+    lifts: ['Kick-off workshop', 'Diagnosis validated'], breaks: ['decision'],
+    tasks: ['Kick-off workshop', 'Decision-maker named', 'Diagnosis validated by client'],
+    resources: ['Kick-off workshop agenda', 'Diagnosis one-pager'] },
+  { name: 'Direction', feel: 'Excited', quote: '“We get to choose.”',
+    goal: 'Give a real choice between distinct directions, presented live.',
+    lifts: ['Real choice of directions'], breaks: ['everything'],
+    tasks: ['Directions presented live', 'One direction chosen'],
+    resources: ['Directions presentation deck', 'How to present directions'] },
+  { name: 'Execution', feel: 'Reassured', quote: '“We know where it’s at.”',
+    goal: 'The client never has to ask where things are. Feedback stays structured and on time.',
+    lifts: ['Updates before they ask', 'Structured feedback'], breaks: ['silence', 'late'],
+    tasks: ['Weekly update sent', 'Feedback round 1 received', 'Feedback round 2 received'],
+    resources: ['Friday update template', 'Feedback form', 'Revision rounds policy'] },
+  { name: 'Delivery', feel: 'Proud', quote: '“This is ours now.”',
+    goal: 'Hand over the work live, so the client owns it and knows how to use it.',
+    lifts: ['Live presentation', 'Clear handover'], breaks: ['zip'],
+    tasks: ['Final presentation held live', 'Handover guide sent', 'Files organised and named'],
+    resources: ['Handover guide template', 'File naming rules'] },
+  { name: 'Follow-up', feel: 'Valued', quote: '“They still care.”',
+    goal: 'Check whether it worked, a month after launch. Care, not a sales call.',
+    lifts: ['Check-in call', '“Did it work?”'], breaks: ['quiet'],
+    tasks: ['Check-in call (4 weeks after)', '“Did it work?” note', 'Testimonial asked'],
+    resources: ['Check-in call questions', 'Case study brief'] },
+];
+
+const BREAKS = {
+  order: { phase: 0, title: 'Treated as order-taking', action: 'Book a discovery call before quoting',
+    spot: 'The client sends a finished brief and a deadline, and only asks for a price.',
+    todo: ['Ask about the problem behind the brief before quoting.', 'Share one honest observation during the fit call.', 'Say no when the project is not a good fit.'],
+    msg: `Thanks for the brief, it's very clear. Before we send a quote, we'd like 30 minutes to understand what's behind it: what's changing for you, and what would make this project a success a year from now.\n\nWould Thursday or Friday work?` },
+  decision: { phase: 1, title: 'No clear decision-maker', action: 'Ask the client who gives final approval',
+    spot: 'The “Approver” field is still empty after the kick-off.',
+    todo: ['Ask during the kick-off who gives final approval.', 'One approver. Others give input through that person.', 'Write the name in the kick-off notes and the project tool.'],
+    msg: `To keep things moving, could you confirm who will give the final approval at each step?\n\nOthers are very welcome to share input. We'll gather it through you so feedback stays in one place.` },
+  everything: { phase: 2, title: 'Wanting everything at once', action: 'Help the client settle on one direction',
+    spot: 'The client asks to merge directions, or more than one direction is still open once Execution starts.',
+    todo: ['Name what each direction gives up.', 'Ask which one best answers the diagnosis.', 'Bring in elements from the others only if they serve the chosen direction.'],
+    msg: `We can see you like parts of each direction. Mixing all of them would blur what makes each one work.\n\nWhich one feels closest to the problem we defined together? From there, we can bring in one or two elements from the others where they really help.` },
+  silence: { phase: 3, title: '“Any update?” silence', action: 'Send the client an update today',
+    spot: 'No client update logged for 5 days or more during Execution.',
+    todo: ['Send a short update every Friday, even when little changed.', 'Say what is done, what comes next, and what you need from them.', 'Never let the client be the one to ask.'],
+    msg: `Quick update on [project]:\n\nThis week we [what's done].\nNext week we'll [what's next].\nFrom your side, we need [input] by [date].\n\nHave a good weekend!` },
+  late: { phase: 3, title: 'Late feedback', action: 'Chase the feedback, with what the delay changes',
+    spot: 'A feedback task is past its due date.',
+    todo: ['Remind the client the day after, with what the delay changes.', 'Offer a 15-minute call instead of written feedback.', 'Restate the impact on the delivery date calmly.'],
+    msg: `Hi [name], checking in on your feedback for [round].\n\nIf we have it by [date], we stay on track for delivery on [date]. If a short call is easier, I can do 15 minutes tomorrow.` },
+  zip: { phase: 4, title: 'Zip file and done', action: 'Book a live handover presentation',
+    spot: 'The project is marked delivered but no handover presentation was held.',
+    todo: ['Present the final work live.', 'Walk through how to use every file.', 'Send a handover guide with files organised and named.'],
+    msg: `We'd love to walk you through the final [deliverable] live rather than only sending files. It takes 45 minutes and we'll show you how to use everything.\n\nHere are a few slots: [slots].` },
+  quiet: { phase: 5, title: 'It goes quiet', action: 'Book the check-in call',
+    spot: 'Delivered more than 4 weeks ago, and no check-in call logged.',
+    todo: ['Book the check-in call on delivery day.', 'Ask “did it work?” with one specific question.', 'Share something useful. Don’t pitch.'],
+    msg: `Hi [name], it's been a month since we launched [project]. How is it working for you?\n\nWe'd love to hear what has landed well and what hasn't. Up for a 20-minute call next week?` },
+};
+
+// Example projects. In the real version this comes from ClickUp, Asana or Notion.
+const PROJECTS = [
+  { id: 'maison-verte', name: 'Maison Verte', type: 'Brand identity', lead: 'Camille R.', approver: 'Thomas B.', tool: 'ClickUp',
+    phase: 3, started: '2026-09-01', lastUpdate: '2026-10-27', feedbackDue: '2026-10-30', feedbackIn: false, directionsOpen: 1,
+    done: { 0: ['2026-08-21', '2026-08-28', '2026-08-29'], 1: ['2026-09-04', '2026-09-04', '2026-09-15'], 2: ['2026-09-30', '2026-10-03'], 3: ['2026-10-27'] } },
+  { id: 'atelier-nord', name: 'Atelier Nord', type: 'Website', lead: 'Jonas M.', approver: null, tool: 'ClickUp',
+    phase: 2, started: '2026-10-06', lastUpdate: '2026-10-31', directionsOpen: 3,
+    done: { 0: ['2026-09-25', '2026-10-01', '2026-10-02'], 1: ['2026-10-08', null, '2026-10-22'] } },
+  { id: 'halden', name: 'Halden Coffee', type: 'Packaging', lead: 'Camille R.', approver: 'Ines H.', tool: 'ClickUp',
+    phase: 5, started: '2026-06-02', lastUpdate: '2026-09-24', delivered: '2026-09-24', handover: true, checkIn: false,
+    done: { 0: ['2026-05-20', '2026-05-28', '2026-05-29'], 1: ['2026-06-04', '2026-06-04', '2026-06-12'], 2: ['2026-06-30', '2026-07-02'],
+            3: ['2026-07-10', '2026-07-24', '2026-08-21'], 4: ['2026-09-24', '2026-09-25', '2026-09-24'] } },
+];
+
+// Rules that turn project data into signals. Each maps to a "When it breaks" entry.
+function signals(p) {
+  const out = [];
+  if (p.phase >= 1 && p.phase <= 4 && !p.approver)
+    out.push({ id: 'decision', sev: 'warn', text: 'No approver set in ' + p.tool + ' since the kick-off.' });
+  if (p.phase >= 1 && p.phase <= 4 && p.lastUpdate) {
+    const d = daysSince(p.lastUpdate);
+    if (d >= 5) out.push({ id: 'silence', sev: d >= 8 ? 'crit' : 'warn', text: `Last client update ${d} days ago (${fmt(p.lastUpdate)}).` });
+  }
+  if (p.feedbackDue && !p.feedbackIn && daysSince(p.feedbackDue) > 0)
+    out.push({ id: 'late', sev: 'crit', text: `Feedback round 1 was due ${fmt(p.feedbackDue)}, now ${daysSince(p.feedbackDue)} days late.` });
+  if (p.phase >= 3 && p.directionsOpen > 1)
+    out.push({ id: 'everything', sev: 'warn', text: `${p.directionsOpen} directions still open in Execution.` });
+  if (p.phase >= 4 && !p.handover)
+    out.push({ id: 'zip', sev: 'warn', text: 'No live handover presentation logged.' });
+  if (p.phase === 5 && !p.checkIn && p.delivered && daysSince(p.delivered) > 28)
+    out.push({ id: 'quiet', sev: 'warn', text: `Delivered ${daysSince(p.delivered)} days ago (${fmt(p.delivered)}). No check-in call yet.` });
+  return out.sort((a, b) => (a.sev === 'crit' ? -1 : 1) - (b.sev === 'crit' ? -1 : 1));
+}
+const status = p => { const s = signals(p); return s.some(x => x.sev === 'crit') ? 'crit' : s.length ? 'warn' : 'ok'; };
+const STATUS_LABEL = { ok: 'On track', warn: 'Needs attention', crit: 'At risk' };
+
+// Small rendering helpers
+const hue = s => [...s].reduce((a, c) => a + c.charCodeAt(0), 0) % 6;
+const initials = n => n.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+const st = s => `<span class="st ${s}">${STATUS_LABEL[s]}</span>`;
+const phaseTag = i => `<span class="tag p${i}">${PHASES[i].name}</span>`;
+const person = n => n ? `<span class="person"><span class="av p${hue(n)}">${initials(n)}</span>${esc(n)}</span>` : '<span class="missing">Not set</span>';
+const pav = p => `<span class="pav p${hue(p.name)}">${esc(p.name[0])}</span>`;
+
+// Curve geometry, same shape as the journey slide
+const W = 1200, H = 240;
+const AIM = [150, 120, 44, 128, 72, 78], CARE = [176, 200, 168, 218, 192, 224];
+const cx = i => (i + 0.5) * W / 6;
+function pathFor(ys) {
+  let d = `M${cx(0)} ${ys[0]}`;
+  for (let i = 1; i < 6; i++) { const m = (cx(i - 1) + cx(i)) / 2; d += ` C${m} ${ys[i - 1]},${m} ${ys[i]},${cx(i)} ${ys[i]}`; }
+  return d;
+}
+
+const wide = matchMedia('(min-width: 1181px)');
+const state = { view: 'projects', mode: 'table', project: PROJECTS[0].id, phase: 3, step: null, ptab: 'overview', filter: 'all', pbreak: 'late', panelOpen: wide.matches };
+
+/* ---------- Sidebar ---------- */
+function renderSide() {
+  $('count-projects').textContent = PROJECTS.length;
+  $('count-breaks').textContent = Object.keys(BREAKS).length;
+  $('side-projects').innerHTML = PROJECTS.map(p => `
+    <button data-id="${p.id}" aria-pressed="${state.view === 'projects' && state.panelOpen && p.id === state.project}">
+      ${pav(p)}${esc(p.name)}<i class="dot ${status(p)}" aria-label="${STATUS_LABEL[status(p)]}"></i></button>`).join('');
+  $('side-projects').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { if (state.view !== 'projects') show('projects'); selectProject(b.dataset.id); }));
+}
+
+/* ---------- Projects view ---------- */
+const filtered = () => PROJECTS.filter(p => state.filter === 'all' || status(p) === state.filter);
+function renderChips() {
+  const n = f => f === 'all' ? PROJECTS.length : PROJECTS.filter(p => status(p) === f).length;
+  $('chips').innerHTML = [['all', 'All projects'], ['crit', 'At risk'], ['warn', 'Needs attention'], ['ok', 'On track']].map(([f, l]) =>
+    `<button class="chip" data-f="${f}" aria-pressed="${state.filter === f}">${f !== 'all' ? `<i class="dot ${f}"></i>` : ''}${l}<span class="n">${n(f)}</span></button>`).join('');
+  $('chips').querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => { state.filter = b.dataset.f; renderProjects(); }));
+  $('crumb-count').textContent = PROJECTS.length;
+  document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === state.mode));
+}
+
+function renderTable() {
+  const list = filtered();
+  $('rows').innerHTML = list.length ? list.map(p => {
+    const s = status(p), top = signals(p)[0], d = daysSince(p.lastUpdate);
+    const updCls = p.phase <= 4 ? (d >= 8 ? 'crit' : d >= 5 ? 'warn' : '') : '';
+    return `<tr data-id="${p.id}" tabindex="0" aria-selected="${state.panelOpen && p.id === state.project}">
+      <td><span class="cell-name">${pav(p)}${esc(p.name)}</span></td>
+      <td><span class="person">${phaseTag(p.phase)}<span class="bar" aria-hidden="true">${PHASES.map((_, i) => `<i class="${i <= p.phase ? 'on' : ''}"></i>`).join('')}</span></span></td>
+      <td>${st(s)}</td>
+      <td class="num upd ${updCls}">${fmt(p.lastUpdate)} · ${d}d ago</td>
+      <td class="next">${top ? esc(BREAKS[top.id].action) : '<span class="muted">Nothing to do</span>'}</td>
+      <td>${person(p.lead)}</td>
+      <td>${person(p.approver)}</td></tr>`;
+  }).join('') : `<tr><td colspan="7" class="empty">No projects with this status.</td></tr>`;
+  $('tfoot').textContent = `${list.length} of ${PROJECTS.length} projects · today is fixed at ${fmt('2026-11-03')} for this example`;
+  $('rows').querySelectorAll('tr[data-id]').forEach(r => {
+    r.addEventListener('click', () => selectProject(r.dataset.id));
+    r.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectProject(r.dataset.id); } });
+  });
+}
+
+function renderBoard() {
+  const list = filtered();
+  $('board-view').innerHTML = PHASES.map((ph, i) => {
+    const items = list.filter(p => p.phase === i);
+    return `<div class="lane"><div class="lane-h">${phaseTag(i)}<span class="n">${items.length}</span></div>
+      ${items.length ? items.map(p => { const top = signals(p)[0]; return `
+        <button class="bcard" data-id="${p.id}" aria-pressed="${state.panelOpen && p.id === state.project}">
+          <span class="r"><span class="nm">${pav(p)}${esc(p.name)}</span><span class="av p${hue(p.lead)}" title="${esc(p.lead)}">${initials(p.lead)}</span></span>
+          <span class="r">${st(status(p))}<span class="muted num">${daysSince(p.lastUpdate)}d</span></span>
+          ${top ? `<span class="nx">${esc(BREAKS[top.id].action)}</span>` : ''}
+        </button>`; }).join('') : '<span class="lane-empty">No projects</span>'}
+    </div>`;
+  }).join('');
+  $('board-view').querySelectorAll('.bcard').forEach(b => b.addEventListener('click', () => selectProject(b.dataset.id)));
+}
+
+function renderOverview() {
+  const grid = [1, 2, 3, 4, 5].map(i => `<line class="grid" x1="${i * W / 6}" y1="-24" x2="${i * W / 6}" y2="186"/>`).join('');
+  const pins = PROJECTS.map(p => {
+    const x = cx(p.phase), y = AIM[p.phase], s = status(p), sel = state.panelOpen && p.id === state.project;
+    const w = p.name.length * 11.6 + 28, lx = Math.min(Math.max(x, w / 2 + 6), W - w / 2 - 6);
+    return `<g class="pin" data-id="${p.id}" tabindex="0" role="button" aria-label="${esc(p.name)}, ${PHASES[p.phase].name}, ${STATUS_LABEL[s]}">
+      <rect class="lbl" x="${lx - w / 2}" y="${y - 56}" width="${w}" height="32" rx="8"/>
+      <text x="${lx}" y="${y - 33}" text-anchor="middle">${esc(p.name)}</text>
+      ${sel ? `<circle class="ring f-${s}" cx="${x}" cy="${y}" r="16" style="fill:none"/>` : ''}
+      <circle class="d f-${s}" cx="${x}" cy="${y}" r="9"/></g>`;
+  }).join('');
+  $('overview-map').innerHTML = `
+    <div class="cols ov-cols">${PHASES.map((ph, i) => `<div class="col">${phaseTag(i)}</div>`).join('')}</div>
+    <svg class="curve" viewBox="0 -24 ${W} 210" role="img" aria-label="Projects placed on the six phases of the journey">
+      ${grid}<path class="ovline" d="${pathFor(AIM)}"/>${pins}</svg>`;
+  $('overview-map').querySelectorAll('.pin').forEach(g => {
+    g.addEventListener('click', () => selectProject(g.dataset.id));
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectProject(g.dataset.id); } });
+  });
+}
+
+function renderProjects() {
+  renderOverview();
+  renderChips();
+  $('table-view').hidden = state.mode !== 'table';
+  $('board-view').hidden = state.mode !== 'board';
+  state.mode === 'table' ? renderTable() : renderBoard();
+}
+document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => { state.mode = b.dataset.mode; renderProjects(); }));
+
+function projectPanel() {
+  const p = PROJECTS.find(x => x.id === state.project);
+  const sigs = signals(p), top = sigs[0], s = status(p);
+  const step = state.step ?? p.phase, ph = PHASES[step], doneDates = p.done[step] || [];
+  const tabs = `<div class="tabs" role="tablist">
+      <button role="tab" data-tab="overview" aria-selected="${state.ptab === 'overview'}">Overview</button>
+      <button role="tab" data-tab="checklist" aria-selected="${state.ptab === 'checklist'}">Checklist<span class="n">${(p.done[p.phase] || []).filter(Boolean).length}/${PHASES[p.phase].tasks.length}</span></button>
+      <button role="tab" data-tab="signals" aria-selected="${state.ptab === 'signals'}">Signals<span class="n">${sigs.length}</span></button></div>`;
+
+  const callout = top ? `
+    <div class="callout ${top.sev}"><span class="ci">${I.flag}</span>
+      <span class="k">Do this first ${st(top.sev)}</span>
+      <strong>${esc(BREAKS[top.id].action)}</strong>
+      <div><p>${esc(top.text)}</p><div class="acts"><button class="btn" data-break="${top.id}">${I.msg}Open the message</button></div></div>
+    </div>` : `<div class="callout ok"><span class="ci">${I.ok}</span><span class="k">All clear</span><strong>Nothing to flag. The project is on track.</strong></div>`;
+
+  const attrs = `<dl class="attrs">
+      <div class="attr"><dt>${I.status}Status</dt><dd>${st(s)}</dd></div>
+      <div class="attr"><dt>${I.tag}Phase</dt><dd>${phaseTag(p.phase)}<span class="muted">${p.phase + 1} of 6</span></dd></div>
+      <div class="attr"><dt>${I.user}Lead</dt><dd>${person(p.lead)}</dd></div>
+      <div class="attr"><dt>${I.check}Client approver</dt><dd>${person(p.approver)}</dd></div>
+      <div class="attr"><dt>${I.cal}Started</dt><dd class="num">${fmt(p.started)}</dd></div>
+      <div class="attr"><dt>${I.msg}Last client update</dt><dd class="num">${fmt(p.lastUpdate)} · ${daysSince(p.lastUpdate)}d ago</dd></div>
+      <div class="attr"><dt>${I.link}Source</dt><dd class="muted">Example data · ${p.tool}</dd></div>
+    </dl>`;
+
+  const prog = `<div class="prog">${PHASES.map((x, i) => `<button class="${i < p.phase ? 'done' : i === p.phase ? 'now' : ''}" data-step="${i}" aria-pressed="${i === step}" aria-label="${x.name}"><i></i>${pad(i)}</button>`).join('')}</div>`;
+  const checks = `<ul class="checks">${ph.tasks.map((t, i) => { const d = doneDates[i];
+    return `<li class="${d ? 'done' : ''}"><span class="box" aria-hidden="true"></span><span class="txt">${esc(t)}</span><span class="when">${d ? fmt(d) : step <= p.phase ? 'To do' : ''}</span></li>`; }).join('')}</ul>`;
+  const res = `<div class="res">${ph.resources.map(r => `<div><span class="doc">N</span>${esc(r)}<span class="src">Notion</span></div>`).join('')}</div>`;
+  const flags = sigs.length ? `<div class="flags">${sigs.map(x => `
+      <div class="flag"><div class="fh">${st(x.sev)}${esc(BREAKS[x.id].title)}</div><strong>${esc(BREAKS[x.id].action)}</strong><p>${esc(x.text)}</p>
+        <div><button class="link" data-break="${x.id}">How to fix it →</button></div></div>`).join('')}</div>` : `<div class="allgood">No signals for this project.</div>`;
+
+  let body = '';
+  if (state.ptab === 'overview') body = `${callout}<div><div class="sec-h">Attributes</div>${attrs}</div><div><div class="sec-h">Progress</div>${prog}</div>`;
+  if (state.ptab === 'checklist') body = `<div><div class="sec-h">Phase</div>${prog}</div><div><div class="sec-h"><span>${pad(step)} ${ph.name}</span><span>${doneDates.filter(Boolean).length}/${ph.tasks.length} done</span></div>${checks}</div><div><div class="sec-h">Resources</div>${res}</div>`;
+  if (state.ptab === 'signals') body = flags;
+
+  return `<div class="p-head">${pav(p).replace('pav', 'pav')}<div class="t"><h2>${esc(p.name)}</h2><p class="sub">${esc(p.type)} · ${PHASES[p.phase].name}</p></div>
+      <button class="close" data-close aria-label="Close record">${I.close}</button></div>
+    ${tabs}<div class="p-body">${body}</div>`;
+}
+
+function selectProject(id) {
+  if (state.project !== id) { state.step = null; }
+  state.project = id; state.panelOpen = true;
+  renderSide(); renderProjects(); renderPanel();
+}
+
+/* ---------- Journey view ---------- */
+function renderJourney() {
+  const i0 = state.phase, sel = state.panelOpen;
+  const heads = PHASES.map((ph, i) => `
+    <button class="col" data-phase="${i}" aria-pressed="${sel && i === i0}">
+      ${phaseTag(i)}<span class="feel">${ph.feel}</span><span class="q">${ph.quote}</span></button>`).join('');
+  const band = sel ? `<rect class="band" x="${i0 * W / 6}" y="0" width="${W / 6}" height="${H}"/>` : '';
+  const grid = [1, 2, 3, 4, 5].map(i => `<line class="grid" x1="${i * W / 6}" y1="0" x2="${i * W / 6}" y2="${H}"/>`).join('');
+  const pts = AIM.map((y, i) => `<circle class="pt ${sel && i === i0 ? 'sel' : ''}" cx="${cx(i)}" cy="${y}" r="5"/>`).join('');
+  const row = (label, fn) => PHASES.map((ph, i) => `<div>${i === 0 ? `<span class="rl">${label}</span>` : '<span class="rl">&nbsp;</span>'}${fn(ph)}</div>`).join('');
+  $('journey-map').innerHTML = `
+    <div class="cols">${heads}</div>
+    <svg class="curve" viewBox="0 0 ${W} ${H}" role="img" aria-label="Emotional curve. The aimed experience peaks in Direction, dips in Execution, then stays high. Without care, it stays low and ends at its lowest.">
+      ${band}${grid}<path class="care" d="${pathFor(CARE)}"/><path class="aim" d="${pathFor(AIM)}"/>${pts}</svg>
+    <div class="rows">${row('What lifts it', ph => ph.lifts.map(l => `<span>${esc(l)}</span>`).join(''))}</div>
+    <div class="rows breaks">${row('What breaks it', ph => ph.breaks.map(b => `<button data-break="${b}">${esc(BREAKS[b].title)}</button>`).join(''))}</div>`;
+  $('journey-map').querySelectorAll('.col').forEach(b => b.addEventListener('click', () => { state.phase = +b.dataset.phase; state.panelOpen = true; renderJourney(); renderPanel(); }));
+  $('journey-map').querySelectorAll('[data-break]').forEach(b => b.addEventListener('click', () => openBreak(b.dataset.break)));
+}
+
+function phasePanel() {
+  const i0 = state.phase, ph = PHASES[i0];
+  return `
+    <div class="p-head"><span class="pav p${i0}">${i0 + 1}</span><div class="t"><h2>${ph.name}</h2><p class="sub">Phase ${i0 + 1} of 6</p></div>
+      <button class="close" data-close aria-label="Close details">${I.close}</button></div>
+    <div class="p-body" style="border-top:1px solid var(--line)">
+      <div><div class="sec-h">Client feels</div><div class="feelbig">${ph.feel}</div><p class="muted" style="margin-top:2px">${ph.quote}</p></div>
+      <div><div class="sec-h">Our goal</div><p>${esc(ph.goal)}</p></div>
+      <div><div class="sec-h">Checklist</div><ul class="checks">${ph.tasks.map(t => `<li><span class="box" aria-hidden="true"></span><span class="txt">${esc(t)}</span></li>`).join('')}</ul></div>
+      <div><div class="sec-h">Resources</div><div class="res">${ph.resources.map(r => `<div><span class="doc">N</span>${esc(r)}<span class="src">Notion</span></div>`).join('')}</div></div>
+      <div><div class="sec-h">What breaks it</div><div class="flags">${ph.breaks.map(b => `<div class="flag"><strong>${esc(BREAKS[b].title)}</strong><p>${esc(BREAKS[b].spot)}</p><div><button class="link" data-break="${b}">Open in playbook →</button></div></div>`).join('')}</div></div>
+    </div>`;
+}
+
+/* ---------- Playbook view ---------- */
+function renderPlaybook() {
+  const entries = Object.entries(BREAKS);
+  $('pb-count').textContent = entries.length;
+  $('pb-list').innerHTML = entries.map(([id, b]) => `
+    <button class="pb-item" data-id="${id}" aria-pressed="${id === state.pbreak}">${phaseTag(b.phase)}<strong>${esc(b.title)}</strong></button>`).join('');
+  $('pb-list').querySelectorAll('.pb-item').forEach(b => b.addEventListener('click', () => { state.pbreak = b.dataset.id; renderPlaybook(); if (!wide.matches) $('pb-detail').scrollIntoView({ block: 'start' }); }));
+  const b = BREAKS[state.pbreak];
+  $('pb-detail').innerHTML = `
+    <div>${phaseTag(b.phase)}<h2>${esc(b.title)}</h2></div>
+    <div><div class="sec-h">How we spot it</div><p>${esc(b.spot)}</p></div>
+    <div><div class="sec-h">What to do</div><ul>${b.todo.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>
+    <div><div class="sec-h">Message to adapt</div>
+      <div class="msg"><div class="msg-h"><span>Email or chat</span><button class="btn ghost" id="copy">Copy message</button></div><p id="msg-text">${esc(b.msg)}</p></div></div>`;
+  $('copy').addEventListener('click', () => {
+    const btn = $('copy'), el = $('msg-text');
+    const done = () => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy message', 1600); };
+    const select = () => { const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = 'Selected, press ⌘C'; };
+    try { navigator.clipboard.writeText(b.msg).then(done, select); } catch (e) { select(); }
+  });
+}
+function openBreak(id) { state.pbreak = id; if (!wide.matches) state.panelOpen = false; show('playbook'); scrollTo(0, 0); }
+
+/* ---------- Panel ---------- */
+function renderPanel() {
+  const panel = $('panel'), hasPanel = state.view !== 'playbook', open = hasPanel && state.panelOpen;
+  $('main').classList.toggle('with-panel', open);
+  $('scrim').classList.toggle('open', open && !wide.matches);
+  panel.classList.toggle('open', open);
+  panel.hidden = !hasPanel || (wide.matches && !open);
+  if (!hasPanel) return;
+  panel.innerHTML = state.view === 'projects' ? projectPanel() : phasePanel();
+  panel.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closePanel));
+  panel.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => { state.ptab = b.dataset.tab; renderPanel(); }));
+  panel.querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', () => { state.step = +b.dataset.step; state.ptab = 'checklist'; renderPanel(); }));
+  panel.querySelectorAll('[data-break]').forEach(b => b.addEventListener('click', () => openBreak(b.dataset.break)));
+}
+function closePanel() {
+  state.panelOpen = false;
+  renderPanel(); renderSide();
+  if (state.view === 'projects') renderProjects();
+  if (state.view === 'journey') renderJourney();
+}
+$('scrim').addEventListener('click', closePanel);
+addEventListener('keydown', e => { if (e.key === 'Escape' && state.panelOpen) closePanel(); });
+wide.addEventListener('change', () => { state.panelOpen = wide.matches; show(state.view); });
+
+/* ---------- Views ---------- */
+const VIEWS = ['projects', 'journey', 'playbook'];
+function show(v) {
+  if (!VIEWS.includes(v)) v = 'projects';
+  state.view = v;
+  VIEWS.forEach(x => $('view-' + x).hidden = x !== v);
+  document.querySelectorAll('.nav button').forEach(t => t.dataset.view === v ? t.setAttribute('aria-current', 'page') : t.removeAttribute('aria-current'));
+  if (v === 'projects') renderProjects();
+  if (v === 'journey') renderJourney();
+  if (v === 'playbook') renderPlaybook();
+  renderSide(); renderPanel();
+  try { history.replaceState(null, '', '#' + v); } catch (e) {}
+}
+document.querySelectorAll('.nav button').forEach(t => t.addEventListener('click', () => { if (!wide.matches) state.panelOpen = false; show(t.dataset.view); scrollTo(0, 0); }));
+
+show(location.hash.slice(1));
+</script>
+
+</body></html>
